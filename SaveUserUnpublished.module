@@ -3,7 +3,7 @@
 /**
  * Allow saving users in unpublished state in ProcessWire
  *
- * Only tested with PW version 3.0.16
+ * Forked from BitPoet's module by Robin S
  */
 
 class SaveUserUnpublished extends Wire implements Module {
@@ -11,13 +11,14 @@ class SaveUserUnpublished extends Wire implements Module {
 		return array(
 			"title"			=>	__("Save User Unpublished", __FILE__),
 			"summary"		=>	__("Allow saving users in unpublished state", __FILE__),
-			"version"		=>	"0.0.18",
+			"version"		=>	"0.1.0",
 			"autoload"		=>	true
 		);
 	}
 	
 	public function init() {
 		$this->addHookAfter("ProcessPageEdit::buildForm", $this, "addSaveUnpublishedButton");
+		$this->addHookBefore('ProcessUser::executeEdit', $this, 'beforeProcessUserEdit');
 	}
 	
 	public function addSaveUnpublishedButton($event) {
@@ -29,8 +30,8 @@ class SaveUserUnpublished extends Wire implements Module {
 		
 		if(! $id) return;
 		
-		if($page->process == "ProcessUser")
-		{
+		if($page->process == "ProcessUser") {
+
 			$editpage = $this->pages->get($id);
 
 			if( $editpage instanceof NullPage ) return;
@@ -72,25 +73,32 @@ class SaveUserUnpublished extends Wire implements Module {
 				}
 			}
 
-			$this->addHookBefore("ProcessPageEdit::processInput", $this, "beforePageEditProcessInput");
 		}
 		
 		$event->return = $form;
 	}
 	
-	public function beforePageEditProcessInput($event) {
-		$form = $event->arguments(0);
-		$level = $event->arguments(1);
-		
-		if($level == 0) {
-			$fld = $form->getChildByName('pass');
-			$fld->required = false;
-			
-			if($this->input->post->unpublishuser) {
-				$this->editPage->addStatus(Page::statusUnpublished);
-			}
-			
-			$event->removeHook(null);
-		}
+	public function beforeProcessUserEdit() {
+
+		// Password inputfield not required
+		$this->addHookBefore('Field(name=pass)::getInputfield', function($event) {
+			$field = $event->object;
+			$field->required = false;
+		});
+
+		// Add script to collapse password inputfield
+		$this->addHookAfter('ProcessPageEdit::execute', function($event) {
+			$out = $event->return;
+			$out .= "
+		<script>
+		$(function(){
+			$('.InputfieldPassword').addClass('collapsed1 InputfieldStateCollapsed');
+		});
+		</script>
+		";
+			$event->return = $out;
+		});
+
 	}
+
 }
