@@ -110,12 +110,12 @@ class SaveUserUnpublished extends Wire implements Module {
 		$this->addHookAfter('ProcessPageEdit::execute', function(HookEvent $event) {
 			$out = $event->return;
 			$out .= "
-		<script>
-		$(function(){
-			$('.InputfieldPassword').addClass('collapsed1 InputfieldStateCollapsed');
-		});
-		</script>
-		";
+<script>
+$(function(){
+	$('.InputfieldPassword').addClass('collapsed1 InputfieldStateCollapsed');
+});
+</script>
+";
 			$event->return = $out;
 		});
 
