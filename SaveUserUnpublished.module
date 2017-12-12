@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
 
 /**
  * Allow saving users in unpublished state in ProcessWire
@@ -7,21 +7,33 @@
  */
 
 class SaveUserUnpublished extends Wire implements Module {
+
+	/**
+	 * Module information
+	 */
 	public static function getModuleInfo() {
 		return array(
 			"title"			=>	__("Save User Unpublished", __FILE__),
 			"summary"		=>	__("Allow saving users in unpublished state", __FILE__),
-			"version"		=>	"0.1.0",
+			"version"		=>	"0.1.1",
 			"autoload"		=>	true
 		);
 	}
-	
+
+	/**
+	 * Init
+	 */
 	public function init() {
 		$this->addHookAfter("ProcessPageEdit::buildForm", $this, "addSaveUnpublishedButton");
 		$this->addHookBefore('ProcessUser::executeEdit', $this, 'beforeProcessUserEdit');
 	}
-	
-	public function addSaveUnpublishedButton($event) {
+
+	/**
+	 * Add a button and checkbox for saving users with unpublished status
+	 *
+	 * @param HookEvent $event
+	 */
+	public function addSaveUnpublishedButton(HookEvent $event) {
 		$page = $event->page;
 		$form = $event->return;
 		
@@ -77,17 +89,25 @@ class SaveUserUnpublished extends Wire implements Module {
 		
 		$event->return = $form;
 	}
-	
+
+	/**
+	 * Make password inputfield not required and collapsed for unpublished users
+	 */
 	public function beforeProcessUserEdit() {
 
+		// Get the user being edited
+		$user = $this->users->get((int) $this->input->id);
+		// Early return if no password has been set (i.e. new user)
+		if(!$user->pass->hash) return;
+
 		// Password inputfield not required
-		$this->addHookBefore('Field(name=pass)::getInputfield', function($event) {
+		$this->addHookBefore('Field(name=pass)::getInputfield', function(HookEvent $event) {
 			$field = $event->object;
 			$field->required = false;
 		});
 
 		// Add script to collapse password inputfield
-		$this->addHookAfter('ProcessPageEdit::execute', function($event) {
+		$this->addHookAfter('ProcessPageEdit::execute', function(HookEvent $event) {
 			$out = $event->return;
 			$out .= "
 		<script>
