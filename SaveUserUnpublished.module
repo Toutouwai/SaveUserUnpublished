@@ -96,9 +96,9 @@ class SaveUserUnpublished extends Wire implements Module {
 	public function beforeProcessUserEdit() {
 
 		// Get the user being edited
-		$user = $this->users->get((int) $this->input->id);
+		$edited_user = $this->users->get((int) $this->input->id);
 		// Early return if no password has been set (i.e. new user)
-		if(!$user->pass->hash) return;
+		if(!$edited_user->pass->hash) return;
 
 		// Password inputfield not required
 		$this->addHookBefore('Field(name=pass)::getInputfield', function(HookEvent $event) {
